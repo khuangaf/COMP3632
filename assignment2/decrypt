@@ -1,0 +1,88 @@
+import sys
+from itertools import cycle
+import subprocess
+from os import system, urandom
+import numpy as np
+from random import randint
+import struct
+fname = 'ciphertext'
+f = open(fname, "r")
+ciphertext = f.read()
+yN = ciphertext[-16:]
+BLOCK_SIZE = 16
+
+
+
+def xor(longer, shorter):
+	if len(longer) < len(shorter):
+		temp = longer
+		longer = shorter
+		shorter = temp
+	return "".join([ chr(ord(a) ^ ord(b)) for (a,b) in zip(longer, cycle(shorter)) ])
+
+def decryptByte(cipher):
+	print 1
+
+# print bytearray(line) 
+
+
+
+def listToBtArray(lst):
+	return bytearray("".join(lst))
+
+def concatAndOutput(text):
+	#(echo text; cat ciphertext.txt) > 'test'
+	file = open('temp', 'w')
+	file.write(text)
+
+	# file_names = ['temp', 'ciphertext']
+	file = open('temp', 'rb')
+	line = file.read()
+	
+	
+	file = open('ciphertext', 'rb')
+	line += file.read()[-16:]
+	file = open('guess', 'wb')
+	file.write(line)
+	
+	
+
+def oracle():
+	args = ['python','oracle','guess']
+	if subprocess.check_output(args) == '1': return True
+	else: return False
+
+def decipherByte():
+
+	
+	for i in range(2**8):
+		#generate random 15 bytes
+		guessing = urandom(15)
+		# convert int to byte
+		bti = struct.pack("B", i)
+		
+		#concatenate
+		guessing = guessing + bti
+
+		concatAndOutput(guessing)
+		# print i
+		if oracle(): 
+			
+			break
+
+	falseOccur = False
+	for j in range(15):
+		extracted = guessing[j: (j+1)]
+		# add the element by 1
+		extracted = chr(ord(extracted)+1)
+		
+		guessing = guessing[: j ] + extracted + guessing[(j+1):]
+		concatAndOutput(guessing)
+		if not oracle():
+			falseOccur = True
+			break
+	if falseOccur: return i ^ (17-j) ^ ord(ciphertext[-17])
+	else: return i ^ 1 ^ ord(ciphertext[-17])
+
+print decipherByte()
+# print oracle()
