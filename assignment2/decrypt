@@ -5,6 +5,7 @@ from os import system, urandom
 import numpy as np
 from random import randint
 import struct
+from tqdm import tqdm
 fname = 'ciphertext'
 f = open(fname, "r")
 ciphertext = f.read()
@@ -52,7 +53,9 @@ def oracle():
 	if subprocess.check_output(args) == '1': return True
 	else: return False
 
-def decipherByte():
+
+
+def decipherLastByte():
 
 	
 	for i in range(2**8):
@@ -60,15 +63,12 @@ def decipherByte():
 		guessing = urandom(15)
 		# convert int to byte
 		bti = struct.pack("B", i)
-		
+
 		#concatenate
 		guessing = guessing + bti
-
 		concatAndOutput(guessing)
 		# print i
-		if oracle(): 
-			
-			break
+		if oracle(): break
 
 	falseOccur = False
 	for j in range(15):
@@ -81,8 +81,34 @@ def decipherByte():
 		if not oracle():
 			falseOccur = True
 			break
-	if falseOccur: return i ^ (17-j) ^ ord(ciphertext[-17])
-	else: return i ^ 1 ^ ord(ciphertext[-17])
+	if falseOccur: return i ^ (16-j) ^ ord(ciphertext[-17]), i ^ (16-j)
+	else: return i ^ 1 ^ ord(ciphertext[-17]), i^1
 
-print decipherByte()
+
+
+def decipherBlock():
+	# create a string of 16 bytes
+	XN = urandom(15)
+	DYN = urandom(15)
+	lastXN, lastDYN = decipherLastByte()
+	XN += chr(lastXN)
+	DYN += chr(lastDYN)
+	decoded += lastXN
+	# k in reverse order from 14 to 0
+	for k in range (14,-1,-1):
+		for i in range(2**8):
+			r= urandom(k) + chr(i) + "".join([ chr(ord(DYN[index]) ^ (16-k))  for index in range(k+1,16)])
+			
+			# concatenate to file and sent to oracle
+			concatAndOutput(r)
+			if oracle():
+				DYN = DYN[:k] + chr(i^(16-k)) + DYN[k+1:]
+				print chr(ord(DYN[k]) ^ ord(ciphertext[-16-(16-k)]))
+				XN = XN[:k] + chr(ord(DYN[k]) ^ ord(ciphertext[-16-(16-k)])) + XN[k+1:]
+				break
+	return XN
+
+
+print decipherBlock()
 # print oracle()
+
