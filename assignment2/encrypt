@@ -1,0 +1,40 @@
+import sys
+from itertools import cycle
+import subprocess
+from os import system, urandom
+import numpy as np
+from random import randint
+import struct
+from Crypto.Cipher import AES
+
+fname = 'plaintext'
+f = open(fname, "r")
+plaintext = f.read()
+# print plaintext
+# xN = ciphertext[-16:]
+num_block = len(plaintext)/16
+print num_block
+
+IV= 'COMP3632 test iv'
+key = 'COMP3632 testkey'
+
+def xor(longer, shorter):
+	if len(longer) < len(shorter):
+		temp = longer
+		longer = shorter
+		shorter = temp
+	# print shorter
+	return "".join([ chr(ord(a) ^ ord(b)) for (a,b) in zip(longer, cycle(shorter)) ])
+
+
+aes = AES.new(key, AES.MODE_CBC, IV)
+ciphertext= IV+aes.encrypt(plaintext)
+
+sys.stdout.write(str(ciphertext))
+
+# for i in range(num_block):
+# 	if i==0:
+# 		# print plaintext[]
+# 		print xor(xor(IV, plaintext[i*16: (i + 1) * 16]),key)
+
+

@@ -31,7 +31,7 @@ def decryptByte(cipher):
 def listToBtArray(lst):
 	return bytearray("".join(lst))
 
-def concatAndOutput(text):
+def concatAndOutput(text, blocknumber):
 	#(echo text; cat ciphertext.txt) > 'test'
 	file = open('temp', 'w')
 	file.write(text)
@@ -42,7 +42,7 @@ def concatAndOutput(text):
 	
 	
 	file = open('ciphertext', 'rb')
-	line += file.read()[-16:]
+	line += file.read()[(blocknumber) * 16: (blocknumber+1) * 16]
 	file = open('guess', 'wb')
 	file.write(line)
 	
@@ -55,9 +55,8 @@ def oracle():
 
 
 
-def decipherLastByte():
+def decipherLastByte(blocknumber):
 
-	
 	for i in range(2**8):
 		#generate random 15 bytes
 		guessing = urandom(15)
@@ -66,7 +65,7 @@ def decipherLastByte():
 
 		#concatenate
 		guessing = guessing + bti
-		concatAndOutput(guessing)
+		concatAndOutput(guessing, blocknumber)
 		# print i
 		if oracle(): break
 
@@ -74,41 +73,50 @@ def decipherLastByte():
 	for j in range(15):
 		extracted = guessing[j: (j+1)]
 		# add the element by 1
-		extracted = chr(ord(extracted)+1)
-		
+		if ord(extracted) < 255:
+			extracted = chr(ord(extracted)+1)
+		else:
+			extracted = chr(ord(extracted)-1)
 		guessing = guessing[: j ] + extracted + guessing[(j+1):]
-		concatAndOutput(guessing)
+		concatAndOutput(guessing, blocknumber)
 		if not oracle():
 			falseOccur = True
 			break
-	if falseOccur: return i ^ (16-j) ^ ord(ciphertext[-17]), i ^ (16-j)
-	else: return i ^ 1 ^ ord(ciphertext[-17]), i^1
+	if falseOccur: return i ^ (16-j) ^ ord(ciphertext[blocknumber*16 -1]), i ^ (16-j)
+	else: return i ^ 1 ^ ord(ciphertext[blocknumber*16 -1]), i^1
 
 
 
-def decipherBlock():
+def decipherBlock(blocknumber):
 	# create a string of 16 bytes
 	XN = urandom(15)
 	DYN = urandom(15)
-	lastXN, lastDYN = decipherLastByte()
+	lastXN, lastDYN = decipherLastByte(blocknumber)
 	XN += chr(lastXN)
 	DYN += chr(lastDYN)
-	decoded += lastXN
+	# decoded += lastXN
 	# k in reverse order from 14 to 0
-	for k in range (14,-1,-1):
+	for k in tqdm(range (14,-1,-1)):
 		for i in range(2**8):
 			r= urandom(k) + chr(i) + "".join([ chr(ord(DYN[index]) ^ (16-k))  for index in range(k+1,16)])
 			
 			# concatenate to file and sent to oracle
-			concatAndOutput(r)
+			concatAndOutput(r, blocknumber)
 			if oracle():
 				DYN = DYN[:k] + chr(i^(16-k)) + DYN[k+1:]
-				print chr(ord(DYN[k]) ^ ord(ciphertext[-16-(16-k)]))
-				XN = XN[:k] + chr(ord(DYN[k]) ^ ord(ciphertext[-16-(16-k)])) + XN[k+1:]
+				XN = XN[:k] + chr(ord(DYN[k]) ^ ord(ciphertext[(blocknumber) * 16 -(16-k)])) + XN[k+1:]
 				break
 	return XN
 
 
-print decipherBlock()
+def decipher():
+	num_blocks = len(ciphertext)/16 
+	#from num_blocks-1 to 1
+	decrypted = ""
+	for N in range(1,num_blocks):
+		decrypted += decipherBlock(N)
+	return decrypted
+sys.stdout.write(str(decipher()))
+# print decipherLastByte(2)
 # print oracle()
 
