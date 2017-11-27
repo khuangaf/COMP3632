@@ -23,7 +23,7 @@ main module of mondrian
 
 import pdb
 import time
-from utils.utility import cmp_str
+
 
 # warning all these variables should be re-inited, if
 # you want to run mondrian with different parameters
@@ -367,3 +367,11 @@ def mondrian(data, k, relax=False, QI_num=-1):
         # print[len(t) for t in RESULT]
         # pdb.set_trace()
     return (result, (ncp, rtime))
+def cmp_str(element1, element2):
+    """
+    compare number in str format correctley
+    """
+    try:
+        return cmp(int(element1), int(element2))
+    except ValueError:
+        return cmp(element1, element2)

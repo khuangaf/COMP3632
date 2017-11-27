@@ -11,14 +11,14 @@ import sys
 fname = sys.argv[1]
 
 
-file= open(fname,'rb')
 
 
 # In[20]:
 
 
-df = pd.read_csv('datafile3_out.txt',header = None)
+df = pd.read_csv(fname,header = None)
 print df.groupby(0).count().min().iloc[0]
+# print df.groupby(0).count()
 
 
 # In[ ]:
