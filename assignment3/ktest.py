@@ -16,8 +16,14 @@ fname = sys.argv[1]
 # In[20]:
 
 
-df = pd.read_csv(fname,header = None)
-print df.groupby(0).count().min().iloc[0]
+
+	
+# display some lines
+
+if __name__ == "__main__": 
+	df = pd.read_csv(fname,header = None)
+	exit(df.groupby(0).count().min().iloc[0])
+
 # print df.groupby(0).count()
 
 
